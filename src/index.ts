@@ -1,23 +1,23 @@
-#!/usr/bin/env node
-import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
-import { createServer } from './server.js';
-import { isSetup } from './auth.js';
+import OAuthProvider from "@cloudflare/workers-oauth-provider";
+import { ZohoMailMCP } from "./mcp.js";
+import { ZohoHandler } from "./zoho/handler.js";
 
-async function main() {
-  if (!isSetup()) {
-    process.stderr.write(
-      '❌ Zoho Mail MCP is not authenticated.\n' +
-      'Run: npx zoho-mail-mcp setup\n'
-    );
-    process.exit(1);
-  }
-
-  const server = createServer();
-  const transport = new StdioServerTransport();
-  await server.connect(transport);
-}
-
-main().catch((err) => {
-  process.stderr.write(`Fatal error: ${err.message}\n`);
-  process.exit(1);
+/**
+ * Entry point. The OAuthProvider wraps everything: it serves the MCP endpoints
+ * (protected by per-user OAuth) and delegates the login UI to ZohoHandler.
+ *
+ *   /mcp   — Streamable HTTP transport (use this in Claude connectors)
+ *   /sse   — legacy SSE transport (for older clients)
+ */
+export default new OAuthProvider({
+  apiHandlers: {
+    "/mcp": ZohoMailMCP.serve("/mcp"),
+    "/sse": ZohoMailMCP.serveSSE("/sse"),
+  },
+  defaultHandler: ZohoHandler as any,
+  authorizeEndpoint: "/authorize",
+  tokenEndpoint: "/token",
+  clientRegistrationEndpoint: "/register",
 });
+
+export { ZohoMailMCP };

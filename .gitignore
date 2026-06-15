@@ -1,6 +1,10 @@
 node_modules/
 dist/
 *.js.map
-.env
-.zoho-mail-mcp/
 *.log
+
+# Local secrets / Wrangler
+.env
+.dev.vars
+.wrangler/
+worker-configuration.d.ts

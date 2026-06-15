@@ -1,38 +1,32 @@
 {
   "name": "zoho-mail-mcp",
-  "version": "1.0.0",
-  "description": "Zoho Mail MCP server for Claude — read, search, draft, and send email via natural language",
-  "main": "dist/index.js",
-  "bin": {
-    "zoho-mail-mcp": "dist/cli.js"
-  },
+  "version": "2.0.0",
+  "description": "Remote Zoho Mail MCP server (Cloudflare Workers) — per-user OAuth, read/search/draft/send email from Claude",
+  "private": true,
+  "type": "module",
   "scripts": {
-    "build": "tsc",
-    "dev": "tsx src/index.ts",
-    "setup": "tsx src/setup.ts"
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "typecheck": "tsc --noEmit",
+    "cf-typegen": "wrangler types"
   },
-  "files": [
-    "dist"
-  ],
-  "keywords": ["mcp", "zoho", "mail", "email", "claude", "ai"],
+  "keywords": ["mcp", "zoho", "mail", "email", "claude", "ai", "cloudflare", "remote"],
   "author": "Axiom Black <tosin@axiomblack.com>",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/axtos/zoho-mail-mcp.git"
+    "url": "https://github.com/axtos/axb-zohomail-mcp.git"
   },
   "dependencies": {
+    "@cloudflare/workers-oauth-provider": "^0.0.5",
     "@modelcontextprotocol/sdk": "^1.12.0",
-    "axios": "^1.7.0",
-    "open": "^10.1.0",
+    "agents": "^0.0.80",
+    "hono": "^4.6.0",
     "zod": "^3.23.0"
   },
   "devDependencies": {
-    "@types/node": "^20.0.0",
-    "tsx": "^4.0.0",
-    "typescript": "^5.4.0"
-  },
-  "engines": {
-    "node": ">=18.0.0"
+    "@cloudflare/workers-types": "^4.20240620.0",
+    "typescript": "^5.4.0",
+    "wrangler": "^3.90.0"
   }
 }

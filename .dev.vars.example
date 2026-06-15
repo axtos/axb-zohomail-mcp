@@ -1,0 +1,9 @@
+# Copy to `.dev.vars` for local `wrangler dev`. NEVER commit the real file.
+# In production these are set with: npx wrangler secret put <NAME>
+
+ZOHO_CLIENT_ID="1000.xxxxxxxxxxxxxxxxxxxxxxxx"
+ZOHO_CLIENT_SECRET="xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+
+# Any long random string — encrypts the OAuth client-approval cookie.
+# Generate one with: openssl rand -hex 32
+COOKIE_ENCRYPTION_KEY="change-me-to-a-long-random-string"

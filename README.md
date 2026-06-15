@@ -1,51 +1,57 @@
 # zoho-mail-mcp
 
-Zoho Mail MCP server for Claude. Read, search, draft, and send email via natural language.
+A **remote** Zoho Mail MCP server for Claude — read, search, draft, and send email by natural language. Runs on Cloudflare Workers with per-user OAuth, so a whole team can connect with one click and no local setup.
 
 Built by [Axiom Black](https://axiomblack.com).
 
 ---
 
-## Features
+## How it works
 
-- **Read** emails, threads, and attachments
-- **Search** across all folders
-- **Draft** emails saved to Zoho Mail for manual review
-- **Send** emails with explicit confirmation step
-- **Organize** — move, label, archive, flag, mark read/unread
+You deploy this **once**. Each teammate connects from Claude and signs into **their own** Zoho mailbox in the browser — they never install anything, edit a config file, or handle any secret.
 
-## Setup
+```
+Claude (Team/Enterprise)
+      │  add custom connector → https://<your-worker>/mcp
+      ▼
+Cloudflare Worker (this repo)
+      │  per-user OAuth, tokens encrypted in KV
+      ▼
+Zoho Mail API
+```
 
-### 1. Install & authenticate
+- **One Zoho OAuth app**, registered in your org. Its client secret lives only in Cloudflare secrets — never in the repo, never on a laptop.
+- **Per-user tokens** are stored encrypted in Workers KV. Remove a user → access is gone. One central kill-switch.
+- **Access tokens refresh transparently** inside the server using each user's refresh token.
+
+> Upgrading from the old local (`npx`) version? That approach shipped a shared
+> secret and required per-machine setup. This release replaces it. **Rotate the
+> old Zoho client secret** — see [DEPLOY.md](./DEPLOY.md).
+
+---
+
+## Quick start
+
+Full walkthrough in **[DEPLOY.md](./DEPLOY.md)**. In short:
 
 ```bash
-npx zoho-mail-mcp setup
+npm install
+npx wrangler kv namespace create OAUTH_KV     # paste id into wrangler.toml
+npx wrangler secret put ZOHO_CLIENT_ID
+npx wrangler secret put ZOHO_CLIENT_SECRET
+npx wrangler secret put COOKIE_ENCRYPTION_KEY # any long random string
+npm run deploy
 ```
 
-This opens your browser for Zoho OAuth login. Approve access, and your tokens are saved automatically to `~/.zoho-mail-mcp/tokens.json`.
+Then register your worker's `/callback` URL in the [Zoho API console](https://api-console.zoho.com/), set `ZOHO_REDIRECT_URI` in `wrangler.toml`, and re-deploy.
 
-### 2. Add to Claude config
+### Add it in Claude (Team/Enterprise)
 
-Open your Claude desktop config file:
-- **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
-- **Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
+A Workspace admin adds it once so it appears for everyone:
 
-Add:
-
-```json
-{
-  "mcpServers": {
-    "zoho-mail": {
-      "command": "npx",
-      "args": ["zoho-mail-mcp"]
-    }
-  }
-}
-```
-
-### 3. Restart Claude
-
-That's it — Claude can now access your Zoho Mail.
+1. **Settings → Connectors → Add custom connector**
+2. URL: `https://<your-worker-subdomain>.workers.dev/mcp`
+3. Save. Teammates click **Connect**, approve Zoho access, and they're done.
 
 ---
 
@@ -53,7 +59,7 @@ That's it — Claude can now access your Zoho Mail.
 
 | Tool | Description |
 |------|-------------|
-| `get_accounts` | Get your Zoho account IDs |
+| `get_accounts` | List the user's Zoho account IDs |
 | `list_folders` | List all folders |
 | `list_emails` | List emails in a folder |
 | `search_emails` | Search by keyword or sender |
@@ -64,23 +70,31 @@ That's it — Claude can now access your Zoho Mail.
 | `save_draft` | Save to Drafts folder |
 | `send_email` | Send with explicit user confirmation |
 | `update_email` | Mark read/unread, flag, archive, spam |
-| `move_email` | Move to folder |
+| `move_email` | Move to a folder |
 | `apply_label` | Add or remove labels |
+
+Every tool defaults to the signed-in user's primary account, so the model rarely needs an account ID up front.
 
 ---
 
 ## Security
 
-- OAuth tokens stored in `~/.zoho-mail-mcp/tokens.json` (permissions: 600)
-- Minimum OAuth scopes — no org-admin access
-- `send_email` requires explicit user confirmation before firing
-- No bulk destructive operations
+- **Per-user OAuth** — each person authenticates as themselves; no shared mailbox access.
+- **Secret isolation** — the Zoho client secret is a Cloudflare secret, never distributed.
+- **Encrypted token storage** — grants live in Workers KV, encrypted at rest.
+- **Minimum scopes** — messages, folders, tags, and read-only account info. No org-admin.
+- **Send guardrail** — `send_email` is documented to require an explicit preview + confirmation before firing.
+- **Central revocation** — drop a grant in KV, or revoke the app in [Zoho Connected Apps](https://accounts.zoho.com/home#connectedapps).
 
 ---
 
-## Revoking access
+## Local development
 
-Go to [Zoho Connected Apps](https://accounts.zoho.com/home#connectedapps) and revoke `zoho-mail-mcp`.
+```bash
+cp .dev.vars.example .dev.vars   # fill in your Zoho dev credentials
+npm run dev                       # http://localhost:8787
+npm run typecheck
+```
 
 ---
 

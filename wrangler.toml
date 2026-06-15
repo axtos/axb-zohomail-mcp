@@ -1,0 +1,35 @@
+name = "zoho-mail-mcp"
+main = "src/index.ts"
+compatibility_date = "2025-03-10"
+compatibility_flags = ["nodejs_compat"]
+
+# Durable Object that hosts the MCP agent (one instance per connected user session).
+[[durable_objects.bindings]]
+name = "MCP_OBJECT"
+class_name = "ZohoMailMCP"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["ZohoMailMCP"]
+
+# KV namespace used by the OAuth provider to persist authorization grants
+# (per-user tokens, encrypted at rest). Create it with:
+#   npx wrangler kv namespace create OAUTH_KV
+# then paste the returned id below.
+[[kv_namespaces]]
+binding = "OAUTH_KV"
+id = "REPLACE_WITH_KV_NAMESPACE_ID"
+
+[vars]
+# Zoho data-center endpoints. Defaults are the .com (US) DC.
+# For other regions change to e.g. https://accounts.zoho.eu / https://mail.zoho.eu
+ZOHO_ACCOUNTS_BASE = "https://accounts.zoho.com"
+ZOHO_API_BASE = "https://mail.zoho.com"
+# Must exactly match the redirect URI registered in the Zoho API console.
+# After your first `wrangler deploy`, set this to https://<your-worker-url>/callback
+ZOHO_REDIRECT_URI = "http://localhost:8787/callback"
+
+# Secrets (do NOT put these here — set with `wrangler secret put <NAME>`):
+#   ZOHO_CLIENT_ID
+#   ZOHO_CLIENT_SECRET
+#   COOKIE_ENCRYPTION_KEY   (any long random string)
