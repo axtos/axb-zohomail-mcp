@@ -32,4 +32,3 @@ ZOHO_REDIRECT_URI = "http://localhost:8787/callback"
 # Secrets (do NOT put these here — set with `wrangler secret put <NAME>`):
 #   ZOHO_CLIENT_ID
 #   ZOHO_CLIENT_SECRET
-#   COOKIE_ENCRYPTION_KEY   (any long random string)

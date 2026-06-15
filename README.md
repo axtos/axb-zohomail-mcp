@@ -39,7 +39,6 @@ npm install
 npx wrangler kv namespace create OAUTH_KV     # paste id into wrangler.toml
 npx wrangler secret put ZOHO_CLIENT_ID
 npx wrangler secret put ZOHO_CLIENT_SECRET
-npx wrangler secret put COOKIE_ENCRYPTION_KEY # any long random string
 npm run deploy
 ```
 

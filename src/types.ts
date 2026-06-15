@@ -1,8 +1,8 @@
 import type { OAuthHelpers } from "@cloudflare/workers-oauth-provider";
 
 /**
- * Worker bindings. Secrets (ZOHO_CLIENT_ID / ZOHO_CLIENT_SECRET /
- * COOKIE_ENCRYPTION_KEY) are injected by Wrangler and merged into this shape.
+ * Worker bindings. Secrets (ZOHO_CLIENT_ID / ZOHO_CLIENT_SECRET) are injected
+ * by Wrangler and merged into this shape.
  */
 export interface Env {
   // Set automatically by the OAuthProvider wrapper.
@@ -15,7 +15,6 @@ export interface Env {
   // Zoho OAuth app credentials (secrets).
   ZOHO_CLIENT_ID: string;
   ZOHO_CLIENT_SECRET: string;
-  COOKIE_ENCRYPTION_KEY: string;
 
   // Regional endpoints + redirect (vars).
   ZOHO_ACCOUNTS_BASE: string;

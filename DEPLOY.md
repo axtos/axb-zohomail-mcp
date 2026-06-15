@@ -34,7 +34,6 @@ npx wrangler kv namespace create OAUTH_KV
 # Store secrets (these are encrypted by Cloudflare and never committed)
 npx wrangler secret put ZOHO_CLIENT_ID
 npx wrangler secret put ZOHO_CLIENT_SECRET
-npx wrangler secret put COOKIE_ENCRYPTION_KEY   # paste: openssl rand -hex 32
 ```
 
 ---
