@@ -5,6 +5,7 @@ import {
   exchangeCodeForZohoTokens,
   fetchPrimaryAccount,
   getZohoAuthUrl,
+  mailApiBaseFor,
 } from "./oauth.js";
 
 /**
@@ -42,8 +43,15 @@ app.get("/callback", async (c) => {
     return c.text("Invalid state", 400);
   }
 
-  const tokens = await exchangeCodeForZohoTokens(c.env, code);
-  const account = await fetchPrimaryAccount(c.env, tokens.access_token);
+  // With Multi-DC, Zoho tells us which data center this user belongs to.
+  // Fall back to the configured defaults when those params aren't present.
+  const accountsServer = c.req.query("accounts-server") ?? c.env.ZOHO_ACCOUNTS_BASE;
+  const apiBase = c.req.query("accounts-server")
+    ? mailApiBaseFor(accountsServer)
+    : c.env.ZOHO_API_BASE;
+
+  const tokens = await exchangeCodeForZohoTokens(c.env, code, accountsServer);
+  const account = await fetchPrimaryAccount(apiBase, tokens.access_token);
 
   const props: Props = {
     email: account.emailAddress,
@@ -52,6 +60,8 @@ app.get("/callback", async (c) => {
     zohoAccessToken: tokens.access_token,
     zohoRefreshToken: tokens.refresh_token,
     expiresAt: Date.now() + tokens.expires_in * 1000 - 60_000,
+    accountsServer,
+    apiBase,
   };
 
   // Hand control back to the OAuth provider, which issues Claude its own token

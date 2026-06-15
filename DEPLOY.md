@@ -17,8 +17,11 @@ You'll need: a Cloudflare account, Node 18+, and admin access to your Zoho org.
      use `http://localhost:8787/callback` so you can test locally.
 3. Copy the **Client ID** and **Client Secret**.
 
-> **Data center matters.** If your org is on Zoho EU/IN/AU, change `ZOHO_ACCOUNTS_BASE`
-> and `ZOHO_API_BASE` in `wrangler.toml` to the matching domain (e.g. `.eu`).
+> **Multi-DC is auto-detected.** Each user's data center (US/EU/IN/AU/JP/CA) is
+> resolved from Zoho's callback at sign-in, so the server routes their tokens and
+> API calls to the right region automatically. The `ZOHO_ACCOUNTS_BASE`/`ZOHO_API_BASE`
+> values in `wrangler.toml` are just the starting point for the login redirect (US
+> default is fine).
 
 ---
 

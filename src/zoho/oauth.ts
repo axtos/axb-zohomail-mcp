@@ -13,7 +13,11 @@ export interface ZohoAccount {
   displayName: string;
 }
 
-/** Build the Zoho consent URL we redirect the user to. */
+/**
+ * Build the Zoho consent URL. We start at the configured accounts server
+ * (US by default); with Multi-DC enabled, Zoho redirects back with the user's
+ * actual `accounts-server` + `location`, which we use from then on.
+ */
 export function getZohoAuthUrl(env: Env, state: string): string {
   const u = new URL(`${env.ZOHO_ACCOUNTS_BASE}/oauth/v2/auth`);
   u.searchParams.set("response_type", "code");
@@ -27,8 +31,17 @@ export function getZohoAuthUrl(env: Env, state: string): string {
   return u.toString();
 }
 
-async function postToken(env: Env, params: Record<string, string>): Promise<ZohoTokens> {
-  const res = await fetch(`${env.ZOHO_ACCOUNTS_BASE}/oauth/v2/token`, {
+/**
+ * Map a regional accounts server to its Mail API host, e.g.
+ * https://accounts.zoho.eu → https://mail.zoho.eu. Works for every Zoho DC
+ * because the only difference is the `accounts.` ↔ `mail.` subdomain.
+ */
+export function mailApiBaseFor(accountsServer: string): string {
+  return accountsServer.replace("://accounts.", "://mail.");
+}
+
+async function postToken(accountsServer: string, params: Record<string, string>): Promise<ZohoTokens> {
+  const res = await fetch(`${accountsServer}/oauth/v2/token`, {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: new URLSearchParams(params).toString(),
@@ -40,9 +53,13 @@ async function postToken(env: Env, params: Record<string, string>): Promise<Zoho
   return data as ZohoTokens;
 }
 
-/** Exchange an authorization code for access + refresh tokens. */
-export function exchangeCodeForZohoTokens(env: Env, code: string): Promise<ZohoTokens> {
-  return postToken(env, {
+/** Exchange an authorization code for access + refresh tokens (on the user's DC). */
+export function exchangeCodeForZohoTokens(
+  env: Env,
+  code: string,
+  accountsServer: string,
+): Promise<ZohoTokens> {
+  return postToken(accountsServer, {
     grant_type: "authorization_code",
     client_id: env.ZOHO_CLIENT_ID,
     client_secret: env.ZOHO_CLIENT_SECRET,
@@ -51,9 +68,13 @@ export function exchangeCodeForZohoTokens(env: Env, code: string): Promise<ZohoT
   });
 }
 
-/** Mint a fresh access token from a stored refresh token. */
-export async function refreshZohoToken(env: Env, refreshToken: string): Promise<ZohoTokens> {
-  const tokens = await postToken(env, {
+/** Mint a fresh access token from a stored refresh token (on the user's DC). */
+export async function refreshZohoToken(
+  env: Env,
+  refreshToken: string,
+  accountsServer: string,
+): Promise<ZohoTokens> {
+  const tokens = await postToken(accountsServer, {
     grant_type: "refresh_token",
     client_id: env.ZOHO_CLIENT_ID,
     client_secret: env.ZOHO_CLIENT_SECRET,
@@ -64,8 +85,8 @@ export async function refreshZohoToken(env: Env, refreshToken: string): Promise<
 }
 
 /** Look up the user's primary Zoho account, used to identify the session. */
-export async function fetchPrimaryAccount(env: Env, accessToken: string): Promise<ZohoAccount> {
-  const res = await fetch(`${env.ZOHO_API_BASE}/api/accounts`, {
+export async function fetchPrimaryAccount(apiBase: string, accessToken: string): Promise<ZohoAccount> {
+  const res = await fetch(`${apiBase}/api/accounts`, {
     headers: { Authorization: `Zoho-oauthtoken ${accessToken}` },
   });
   const data = (await res.json()) as Record<string, any>;

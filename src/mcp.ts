@@ -26,7 +26,11 @@ export class ZohoMailMCP extends McpAgent<Env, unknown, Props> {
       return this.cached.token;
     }
 
-    const refreshed = await refreshZohoToken(this.env, this.props.zohoRefreshToken);
+    const refreshed = await refreshZohoToken(
+      this.env,
+      this.props.zohoRefreshToken,
+      this.props.accountsServer,
+    );
     this.cached = {
       token: refreshed.access_token,
       expiresAt: now + refreshed.expires_in * 1000 - 60_000, // 1 min safety buffer
@@ -37,7 +41,7 @@ export class ZohoMailMCP extends McpAgent<Env, unknown, Props> {
   async init(): Promise<void> {
     const client = new ZohoClient(
       () => this.getAccessToken(),
-      this.env.ZOHO_API_BASE,
+      this.props.apiBase,
     );
     registerTools(this.server, client, this.props.accountId);
   }

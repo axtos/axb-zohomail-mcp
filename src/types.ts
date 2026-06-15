@@ -35,6 +35,9 @@ export interface Props {
   zohoRefreshToken: string;
   /** Unix ms — when the access token above stops being valid. */
   expiresAt: number;
+  /** The user's Zoho data-center endpoints, resolved at sign-in (Multi-DC). */
+  accountsServer: string;
+  apiBase: string;
   [key: string]: unknown;
 }
 
