@@ -27,7 +27,7 @@ ZOHO_ACCOUNTS_BASE = "https://accounts.zoho.com"
 ZOHO_API_BASE = "https://mail.zoho.com"
 # Must exactly match the redirect URI registered in the Zoho API console.
 # After your first `wrangler deploy`, set this to https://<your-worker-url>/callback
-ZOHO_REDIRECT_URI = "http://localhost:8787/callback"
+ZOHO_REDIRECT_URI = "https://zoho-mail-mcp.tosin-ab4.workers.dev/callback"
 
 # Secrets (do NOT put these here — set with `wrangler secret put <NAME>`):
 #   ZOHO_CLIENT_ID
